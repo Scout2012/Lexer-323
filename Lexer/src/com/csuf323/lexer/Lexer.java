@@ -21,7 +21,7 @@ public class Lexer {
 		KEYWORD(3),
 		OPER(4),
 		REAL(5),
-		INTEGER(6),
+		INTEGER(6);
 		private int id;
 		State(int id){
 			this.id=id;
