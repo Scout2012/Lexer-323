@@ -9,12 +9,11 @@ import java.util.stream.Stream;
 public class Lexer {
 
 	class Token{
-		public String tokenName;
+		public State tokenName;
 		public String lexemeName;
-
 	}
 	
-	public enum State{ //Updated -2/10
+	public enum State {
 		FINISH(0),
 		CHARACTER(1),
 		SEPARATOR(2),
@@ -22,12 +21,14 @@ public class Lexer {
 		OPER(4),
 		REAL(5),
 		INTEGER(6);
+		
 		private int id;
-		State(int id){
-			this.id=id;
+		
+		State(int id) {
+			this.id = id;
 		}
 
-		public int getId(){
+		public int getId() {
 			return id;
 		}
 	}
@@ -41,14 +42,14 @@ public class Lexer {
 			{ State.INTEGER,    State.FINISH,    State.FINISH,      State.FINISH, State.REAL,   State.INTEGER }
 	};
 	
-	public Lexer(){
+	public Lexer() {
 	}
 
-	private List<Token> lexicallyAnalyze(String expression){
+	private List<Token> lexicallyAnalyze(String expression) {
 		return null;
 	}
 
-	private State parseCharacter(char input){ //New -2/10
+	private State parseCharacter(char input) {
 		switch(input){
 			case '=': case '+': case '-': case '/': case '*': case '<': case '>': case '%':
 				return State.OPER;
@@ -61,16 +62,15 @@ public class Lexer {
 		return State.CHARACTER;
 	}
 
-	private State parseState(State current, State input){ //New -2/10 -parseCharacter will most likely to used as
+	private State parseState(State current, State input) {
 		//State input, while State current would be the previous result
 		return stateTransitionTable[current.getId()][input.getId()];
 	}
 
-	public String feedMe(String fileName){
+	public String feedMe(String fileName) {
 		try (Stream<String> stream = Files.lines(Paths.get(fileName))) {
 	        stream.forEach(System.out::println);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
