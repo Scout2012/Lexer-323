@@ -18,6 +18,7 @@ public class Lexer {
 	}
 	
 	public enum State {
+		REJECT(-1),
 		START(0),
 		IDENTIFIER(1),
 		NUMBER(2),
@@ -42,17 +43,17 @@ public class Lexer {
 	}
 	
 	Lexer.State[][] stateTransitionTable = {
-			{ State.START,          State.IDENTIFIER,  State.NUMBER,     State.REAL,    State.IN_STRING,  State.IN_COMMENT, State.IN_COMPARATOR, State.COMPARATOR, State.SEPARATOR, State.END_STATEMENT, State.DOT_TRANSITION},
-			{ State.IDENTIFIER,     State.IDENTIFIER,  State.IDENTIFIER, State.START,   State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
-			{ State.NUMBER,         State.START,       State.NUMBER,     State.REAL,    State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.REAL},
-			{ State.REAL,           State.START,       State.REAL,       State.REAL,    State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.DOT_TRANSITION},
-			{ State.IN_STRING,      State.START,       State.START,      State.START,   State.IN_STRING,  State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
-			{ State.IN_COMMENT,     State.START,       State.START,      State.START,   State.IN_COMMENT, State.IN_COMMENT, State.START,         State.START,      State.START,     State.START,         State.START},
-			{ State.IN_COMPARATOR,  State.START,       State.START,      State.START,   State.START,      State.START,      State.START,         State.COMPARATOR, State.SEPARATOR, State.END_STATEMENT, State.DOT_TRANSITION},
-			{ State.COMPARATOR,     State.START,       State.START,      State.START,   State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
-			{ State.SEPARATOR,      State.START,       State.START,      State.START,   State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
-			{ State.END_STATEMENT,  State.START,       State.START,      State.START,   State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
-			{ State.DOT_TRANSITION, State.START,       State.REAL,       State.START,   State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.START,          State.IDENTIFIER,  State.NUMBER,     State.REAL,         State.IN_STRING,  State.IN_COMMENT, State.IN_COMPARATOR, State.COMPARATOR, State.SEPARATOR, State.END_STATEMENT, State.DOT_TRANSITION},
+			{ State.IDENTIFIER,     State.IDENTIFIER,  State.IDENTIFIER, State.START,        State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.NUMBER,         State.START,       State.NUMBER,     State.REAL,         State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.REAL},
+			{ State.REAL,           State.START,       State.REAL,       State.REAL,         State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.DOT_TRANSITION},
+			{ State.IN_STRING,      State.START,       State.START,      State.START,        State.IN_STRING,  State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.IN_COMMENT,     State.IN_COMMENT,  State.IN_COMMENT, State.IN_COMMENT,   State.IN_COMMENT, State.START,      State.IN_COMMENT,    State.IN_COMMENT, State.IN_COMMENT,State.IN_COMMENT,    State.IN_COMMENT},
+			{ State.IN_COMPARATOR,  State.START,       State.START,      State.START,        State.START,      State.START,      State.START,         State.COMPARATOR, State.SEPARATOR, State.END_STATEMENT, State.DOT_TRANSITION},
+			{ State.COMPARATOR,     State.START,       State.START,      State.START,        State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.SEPARATOR,      State.START,       State.START,      State.START,        State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.END_STATEMENT,  State.START,       State.START,      State.START,        State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.DOT_TRANSITION, State.START,       State.REAL,       State.START,        State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
 	};
 	
 	private State prevState = State.START;
@@ -68,76 +69,39 @@ public class Lexer {
 	private State getColumn(char input) {
 		switch(input){
 			case '0': case '1':case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-				if(this.currState == State.START){
-					this.prevState = this.currState;
-					this.currState = State.NUMBER;
-					return State.NUMBER;
-				} else if(this.currState == State.DOT_TRANSITION){
-					this.prevState = this.currState;
-					this.currState = State.REAL;
-					return State.REAL;
-				} else {
-					this.prevState = this.currState;
-					return this.currState;					
-				}
-				
-			case '(': case ')': case '{': case '}': case ',':
-				this.prevState = this.currState;
-				this.currState = State.SEPARATOR;
+				return State.NUMBER;	
+			case '(': case ')': case '{': case '}': case ',': case ' ':
 				return State.SEPARATOR;
 			case '>': case '<': case '=': 
 				if(this.currState != State.IN_COMPARATOR){
-					this.prevState = this.currState;
-					this.currState = State.IN_COMPARATOR;
 					return State.IN_COMPARATOR;
 				} else {
-					this.prevState = this.currState;
-					this.currState = State.COMPARATOR;
 					return State.COMPARATOR;
 				}
-				
 			case '!':
-				if(this.currState != State.IN_COMMENT){
-					this.prevState = this.currState;
-					this.currState = State.IN_COMMENT;
+				if(this.currState != State.IN_COMMENT){	
 					return State.IN_COMMENT;
 				} else {
-					this.prevState = this.currState;
-					this.currState = State.START;
 					return State.START;
 				}
 			case '.':
 				if(this.currState == State.NUMBER){
-					this.prevState = this.currState;
-					this.currState = State.REAL;
 					return State.REAL;
 				} else {
-					this.prevState = this.currState;
-					this.currState = State.DOT_TRANSITION;
 					return State.DOT_TRANSITION;
 				}
 			case '"':
 				if(this.currState != State.IN_STRING){
-					this.prevState = this.currState;
-					this.currState = State.IN_STRING;
 					return State.IN_STRING;
 				} else {
-					this.prevState = this.currState;
-					this.currState = State.START;
 					return State.START;
 				}
 			case ';':
-				this.prevState = this.currState;
-//				this.currState = State.END_STATEMENT;
 				return State.END_STATEMENT;
 			default:
 				if(this.currState == State.IN_COMMENT){
-					this.prevState = this.currState;
-					this.currState = State.IN_COMMENT;
 					return State.IN_COMMENT;
 				} else {
-					this.prevState = this.currState;
-					this.currState = State.IDENTIFIER;
 					return State.IDENTIFIER;
 				}
 		}
@@ -158,21 +122,22 @@ public class Lexer {
 		}
 
 		while (input.hasNextLine()) {
-			String nextLineRead = input.nextLine().replaceAll("[\\n\\t ]", "");
+			String nextLineRead = input.nextLine();
 			String currToken = "";
-		    for(int i = 0; i < nextLineRead.length(); i++){
-		    	
+		    for(int i = 0; i < nextLineRead.length();){
 		    	char currChar = nextLineRead.charAt(i);
-		    	if(!Character.isWhitespace(currChar )|| currChar != '\n' || currChar != '\t'){
-		    		State tokenState = parseState(this.currState, getColumn(currChar));
-		    		if(tokenState != State.START){
-		    			currToken += currChar;
-		    		} else {
+		    	this.currState = parseState(this.currState, getColumn(currChar));
+		    	if(this.currState == State.START){
+		    		if(currChar != '\n' && currChar != '\t'){
 		    			System.out.print(this.prevState);
 		    			System.out.println("           "  + currToken);
-		    			currToken = "";
 		    		}
+		    		currToken = "";
+		    	} else {
+		    		currToken += currChar;
+		    		++i;
 		    	}
+		    	this.prevState = this.currState;
 		    }
 		}
 	}
