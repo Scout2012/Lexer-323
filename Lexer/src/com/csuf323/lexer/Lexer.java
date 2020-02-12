@@ -1,9 +1,13 @@
 package com.csuf323.lexer;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.stream.Stream;
 
 public class Lexer {
@@ -51,6 +55,9 @@ public class Lexer {
 			{ State.DOT_TRANSITION, State.START,       State.REAL,       State.START,   State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
 	};
 	
+	private State prevState = State.START;
+	private State currState = State.START;
+	
 	public Lexer() {
 	}
 
@@ -58,8 +65,82 @@ public class Lexer {
 		return null;
 	}
 
-	private State parseCharacter(char input) {
-		return null;
+	private State getColumn(char input) {
+		switch(input){
+			case '0': case '1':case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+				if(this.currState == State.START){
+					this.prevState = this.currState;
+					this.currState = State.NUMBER;
+					return State.NUMBER;
+				} else if(this.currState == State.DOT_TRANSITION){
+					this.prevState = this.currState;
+					this.currState = State.REAL;
+					return State.REAL;
+				} else {
+					this.prevState = this.currState;
+					return this.currState;					
+				}
+				
+			case '(': case ')': case '{': case '}': case ',':
+				this.prevState = this.currState;
+				this.currState = State.SEPARATOR;
+				return State.SEPARATOR;
+			case '>': case '<': case '=': 
+				if(this.currState != State.IN_COMPARATOR){
+					this.prevState = this.currState;
+					this.currState = State.IN_COMPARATOR;
+					return State.IN_COMPARATOR;
+				} else {
+					this.prevState = this.currState;
+					this.currState = State.COMPARATOR;
+					return State.COMPARATOR;
+				}
+				
+			case '!':
+				if(this.currState != State.IN_COMMENT){
+					this.prevState = this.currState;
+					this.currState = State.IN_COMMENT;
+					return State.IN_COMMENT;
+				} else {
+					this.prevState = this.currState;
+					this.currState = State.START;
+					return State.START;
+				}
+			case '.':
+				if(this.currState == State.NUMBER){
+					this.prevState = this.currState;
+					this.currState = State.REAL;
+					return State.REAL;
+				} else {
+					this.prevState = this.currState;
+					this.currState = State.DOT_TRANSITION;
+					return State.DOT_TRANSITION;
+				}
+			case '"':
+				if(this.currState != State.IN_STRING){
+					this.prevState = this.currState;
+					this.currState = State.IN_STRING;
+					return State.IN_STRING;
+				} else {
+					this.prevState = this.currState;
+					this.currState = State.START;
+					return State.START;
+				}
+			case ';':
+				this.prevState = this.currState;
+//				this.currState = State.END_STATEMENT;
+				return State.END_STATEMENT;
+			default:
+				if(this.currState == State.IN_COMMENT){
+					this.prevState = this.currState;
+					this.currState = State.IN_COMMENT;
+					return State.IN_COMMENT;
+				} else {
+					this.prevState = this.currState;
+					this.currState = State.IDENTIFIER;
+					return State.IDENTIFIER;
+				}
+		}
 	}
 
 	private State parseState(State current, State input) {
@@ -67,13 +148,32 @@ public class Lexer {
 		return stateTransitionTable[current.getId()][input.getId()];
 	}
 
-	public String feedMe(String fileName) {
-		try (Stream<String> stream = Files.lines(Paths.get(fileName))) {
-	        stream.forEach(System.out::println);
-		} catch (IOException e) {
+	public void feedMe(String fileName) {
+		File file = new File(fileName);
+		Scanner input = null;
+		try {
+			input = new Scanner(file);
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
-			return null;
 		}
-		return fileName;
+
+		while (input.hasNextLine()) {
+			String nextLineRead = input.nextLine().replaceAll("[\\n\\t ]", "");
+			String currToken = "";
+		    for(int i = 0; i < nextLineRead.length(); i++){
+		    	
+		    	char currChar = nextLineRead.charAt(i);
+		    	if(!Character.isWhitespace(currChar )|| currChar != '\n' || currChar != '\t'){
+		    		State tokenState = parseState(this.currState, getColumn(currChar));
+		    		if(tokenState != State.START){
+		    			currToken += currChar;
+		    		} else {
+		    			System.out.print(this.prevState);
+		    			System.out.println("           "  + currToken);
+		    			currToken = "";
+		    		}
+		    	}
+		    }
+		}
 	}
 }
