@@ -58,6 +58,7 @@ public class Lexer {
 	
 	private State prevState = State.START;
 	private State currState = State.START;
+	private boolean isInComment = false;
 	
 	public Lexer() {
 	}
@@ -126,8 +127,15 @@ public class Lexer {
 			String currToken = "";
 		    for(int i = 0; i < nextLineRead.length();){
 		    	char currChar = nextLineRead.charAt(i);
-		    	this.currState = parseState(this.currState, getColumn(currChar));
-		    	if(this.currState == State.START){
+		    	if(currChar == '!'){
+		    		this.isInComment = !this.isInComment;
+		    	}
+		    	if(!this.isInComment){
+		    		this.currState = parseState(this.currState, getColumn(currChar));		    		
+		    	} else {
+		    		this.currState = State.IN_COMMENT;
+		    	}
+		    	if(this.currState == State.START && this.prevState != State.IN_COMMENT){
 		    		if(currChar != '\n' && currChar != '\t'){
 		    			System.out.print(this.prevState);
 		    			System.out.println("           "  + currToken);
