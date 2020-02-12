@@ -14,13 +14,17 @@ public class Lexer {
 	}
 	
 	public enum State {
-		FINISH(0),
-		CHARACTER(1),
-		SEPARATOR(2),
-		KEYWORD(3),
-		OPER(4),
-		REAL(5),
-		INTEGER(6);
+		START(0),
+		IDENTIFIER(1),
+		NUMBER(2),
+		REAL(3),
+		IN_STRING(4),
+		IN_COMMENT(5),
+		IN_COMPARATOR(6),
+		COMPARATOR(7),
+		SEPARATOR(8),
+		END_STATEMENT(9),
+		DOT_TRANSITION(10);
 		
 		private int id;
 		
@@ -34,12 +38,17 @@ public class Lexer {
 	}
 	
 	Lexer.State[][] stateTransitionTable = {
-			{ State.FINISH,     State.CHARACTER, State.SEPARATOR,   State.OPER,   State.REAL,   State.INTEGER },
-			{ State.CHARACTER,  State.CHARACTER, State.FINISH,      State.FINISH, State.FINISH, State.FINISH },
-			{ State.SEPARATOR,  State.FINISH,    State.SEPARATOR,   State.FINISH, State.FINISH, State.FINISH },
-			{ State.OPER,       State.FINISH,    State.FINISH,      State.OPER,   State.FINISH, State.FINISH },
-			{ State.REAL,       State.FINISH,    State.FINISH,      State.FINISH, State.REAL,   State.REAL},
-			{ State.INTEGER,    State.FINISH,    State.FINISH,      State.FINISH, State.REAL,   State.INTEGER }
+			{ State.START,          State.IDENTIFIER,  State.NUMBER,     State.REAL,    State.IN_STRING,  State.IN_COMMENT, State.IN_COMPARATOR, State.COMPARATOR, State.SEPARATOR, State.END_STATEMENT, State.DOT_TRANSITION},
+			{ State.IDENTIFIER,     State.IDENTIFIER,  State.IDENTIFIER, State.START,   State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.NUMBER,         State.START,       State.NUMBER,     State.REAL,    State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.REAL},
+			{ State.REAL,           State.START,       State.REAL,       State.REAL,    State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.DOT_TRANSITION},
+			{ State.IN_STRING,      State.START,       State.START,      State.START,   State.IN_STRING,  State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.IN_COMMENT,     State.START,       State.START,      State.START,   State.IN_COMMENT, State.IN_COMMENT, State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.IN_COMPARATOR,  State.START,       State.START,      State.START,   State.START,      State.START,      State.START,         State.COMPARATOR, State.SEPARATOR, State.END_STATEMENT, State.DOT_TRANSITION},
+			{ State.COMPARATOR,     State.START,       State.START,      State.START,   State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.SEPARATOR,      State.START,       State.START,      State.START,   State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.END_STATEMENT,  State.START,       State.START,      State.START,   State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
+			{ State.DOT_TRANSITION, State.START,       State.REAL,       State.START,   State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
 	};
 	
 	public Lexer() {
@@ -50,16 +59,7 @@ public class Lexer {
 	}
 
 	private State parseCharacter(char input) {
-		switch(input){
-			case '=': case '+': case '-': case '/': case '*': case '<': case '>': case '%':
-				return State.OPER;
-			case ' ': case '(': case ')': case '{': case '}': case '[': case ']': case ',': case '.': case ':': case ';':
-			case '\"': case '\'':
-				return State.SEPARATOR;
-			case '1': case'2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': case '0':
-				return State.INTEGER;
-		}
-		return State.CHARACTER;
+		return null;
 	}
 
 	private State parseState(State current, State input) {
