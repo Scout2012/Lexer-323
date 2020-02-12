@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 public class Lexer {
 
 	class Token{
-		public String tokenName;
+		public State tokenName;
 		public String lexemeName;
 	}
 	
@@ -23,8 +23,9 @@ public class Lexer {
 		INTEGER(6);
 		
 		private int id;
+		
 		State(int id) {
-			this.id=id;
+			this.id = id;
 		}
 
 		public int getId() {
@@ -70,7 +71,6 @@ public class Lexer {
 		try (Stream<String> stream = Files.lines(Paths.get(fileName))) {
 	        stream.forEach(System.out::println);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
