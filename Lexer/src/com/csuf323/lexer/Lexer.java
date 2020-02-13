@@ -16,7 +16,7 @@ public class Lexer {
 		public State tokenName;
 		public String lexemeName;
 	}
-	
+
 	public enum State {
 		REJECT(-1),
 		START(0),
@@ -30,9 +30,9 @@ public class Lexer {
 		SEPARATOR(8),
 		END_STATEMENT(9),
 		DOT_TRANSITION(10);
-		
+
 		private int id;
-		
+
 		State(int id) {
 			this.id = id;
 		}
@@ -41,7 +41,7 @@ public class Lexer {
 			return id;
 		}
 	}
-	
+
 	Lexer.State[][] stateTransitionTable = {
 			{ State.START,          State.IDENTIFIER,  State.NUMBER,     State.REAL,         State.IN_STRING,  State.IN_COMMENT, State.IN_COMPARATOR, State.COMPARATOR, State.SEPARATOR, State.END_STATEMENT, State.DOT_TRANSITION},
 			{ State.IDENTIFIER,     State.IDENTIFIER,  State.IDENTIFIER, State.START,        State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
@@ -55,10 +55,11 @@ public class Lexer {
 			{ State.END_STATEMENT,  State.START,       State.START,      State.START,        State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
 			{ State.DOT_TRANSITION, State.START,       State.REAL,       State.START,        State.START,      State.START,      State.START,         State.START,      State.START,     State.START,         State.START},
 	};
-	
+
 	private State prevState = State.START;
 	private State currState = State.START;
-	
+	private boolean isInComment = false;
+
 	public Lexer() {
 	}
 
@@ -69,17 +70,17 @@ public class Lexer {
 	private State getColumn(char input) {
 		switch(input){
 			case '0': case '1':case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-				return State.NUMBER;	
+				return State.NUMBER;
 			case '(': case ')': case '{': case '}': case ',': case ' ':
 				return State.SEPARATOR;
-			case '>': case '<': case '=': 
+			case '>': case '<': case '=':
 				if(this.currState != State.IN_COMPARATOR){
 					return State.IN_COMPARATOR;
 				} else {
 					return State.COMPARATOR;
 				}
 			case '!':
-				if(this.currState != State.IN_COMMENT){	
+				if(this.currState != State.IN_COMMENT){
 					return State.IN_COMMENT;
 				} else {
 					return State.START;
@@ -112,10 +113,10 @@ public class Lexer {
 		return stateTransitionTable[current.getId()][input.getId()];
 	}
 
-	public void feedMe(String fileName) {
+	public List<Token> createTokenList(String fileName){
 		File file = new File(fileName);
 		Scanner input = null;
-		List<Token> tokenList = new ArrayList<Token>();
+		List<Token>tokenList = new ArrayList<Token>();
 		try {
 			input = new Scanner(file);
 		} catch (FileNotFoundException e) {
@@ -126,27 +127,41 @@ public class Lexer {
 			String nextLineRead = input.nextLine();
 			String currToken = "";
 			Token token = new Token();
-		    for(int i = 0; i < nextLineRead.length();){
-		    	char currChar = nextLineRead.charAt(i);
-		    	this.currState = parseState(this.currState, getColumn(currChar));
-		    	if(this.currState == State.START){
-		    		if(currChar != '\n' && currChar != '\t'){
-		    			token.tokenName = this.prevState;
-		    			token.lexemeName = currToken;
+			for(int i = 0; i < nextLineRead.length();){
+				char currChar = nextLineRead.charAt(i);
+				if(currChar == '!'){
+					this.isInComment = !this.isInComment;
+				}
+				if(!this.isInComment){
+					this.currState = parseState(this.currState, getColumn(currChar));
+				} else {
+					this.currState = State.IN_COMMENT;
+				}
+				if(this.currState == State.START && this.prevState != State.IN_COMMENT){
+					if(currChar != '\n' && currChar != '\t'){
+						token.tokenName=this.prevState;//System.out.print(this.prevState);
+						token.lexemeName=currToken;//System.out.println("           "  + currToken);
 						tokenList.add(token);
-		    		}
-		    		currToken = "";
-		    		token = new Token();
-		    	} else {
-		    		currToken += currChar;
-		    		++i;
-		    	}
-		    	this.prevState = this.currState;
-		    }
+						token = new Token();
+					}
+					currToken = "";
+				} else {
+					currToken += currChar;
+					++i;
+				}
+				this.prevState = this.currState;
+			}
 		}
-		for(Token printToken : tokenList){
-			System.out.println(printToken.lexemeName);
-		}
+		return tokenList;
 	}
 
+
+	public void feedMe(String fileName) {
+		List<Token>tokenList = new ArrayList<Token>();
+		tokenList = createTokenList(fileName);
+		for(Token printToken:tokenList){
+			System.out.print(printToken.tokenName);
+			System.out.println("           "  + printToken.lexemeName);
+		}
+	}
 }
