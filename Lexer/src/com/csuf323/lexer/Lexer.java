@@ -115,6 +115,7 @@ public class Lexer {
 	public void feedMe(String fileName) {
 		File file = new File(fileName);
 		Scanner input = null;
+		List<Token> tokenList = new ArrayList<Token>();
 		try {
 			input = new Scanner(file);
 		} catch (FileNotFoundException e) {
@@ -124,15 +125,18 @@ public class Lexer {
 		while (input.hasNextLine()) {
 			String nextLineRead = input.nextLine();
 			String currToken = "";
+			Token token = new Token();
 		    for(int i = 0; i < nextLineRead.length();){
 		    	char currChar = nextLineRead.charAt(i);
 		    	this.currState = parseState(this.currState, getColumn(currChar));
 		    	if(this.currState == State.START){
 		    		if(currChar != '\n' && currChar != '\t'){
-		    			System.out.print(this.prevState);
-		    			System.out.println("           "  + currToken);
+		    			token.tokenName = this.prevState;
+		    			token.lexemeName = currToken;
+						tokenList.add(token);
 		    		}
 		    		currToken = "";
+		    		token = new Token();
 		    	} else {
 		    		currToken += currChar;
 		    		++i;
@@ -140,5 +144,9 @@ public class Lexer {
 		    	this.prevState = this.currState;
 		    }
 		}
+		for(Token printToken : tokenList){
+			System.out.println(printToken.lexemeName);
+		}
 	}
+
 }
