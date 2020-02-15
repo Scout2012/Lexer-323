@@ -22,11 +22,11 @@ public class Lexer {
 		IN_STRING(4),
 		IN_COMMENT(5),
 		SPACE(6),
-		IN_COMPARATOR(6),
-		COMPARATOR(7),
-		SEPARATOR(8),
-		END_STATEMENT(9),
-		DOT_TRANSITION(10);
+		IN_COMPARATOR(7),
+		COMPARATOR(8),
+		SEPARATOR(9),
+		END_STATEMENT(10),
+		DOT_TRANSITION(11);
 
 		private int id;
 
@@ -75,7 +75,6 @@ public class Lexer {
 				 return State.SPACE;
 			case '>': case '<': case '=': 
 				if(this.currState != State.IN_COMPARATOR){
-					System.out.println("Rhee " + this.currState);
 					return State.IN_COMPARATOR;
 				} else {
 					return State.COMPARATOR;
@@ -130,24 +129,57 @@ public class Lexer {
 			Token token = new Token();
 			for(int i = 0; i < nextLineRead.length();){
 				char currChar = nextLineRead.charAt(i);
-				if(currChar == '!'){
-					this.isInComment = !this.isInComment;
-				}
-				if(!this.isInComment){
-					this.currState = parseState(this.currState, getColumn(currChar));
-				} else {
+				if(currChar == '!' && this.isInComment){
+					this.isInComment = false;
+					this.prevState = State.IN_COMMENT;
+					this.currState = State.START;
+				} else if(currChar == '!') {
+					this.isInComment = true;
+					this.prevState = this.currState;
 					this.currState = State.IN_COMMENT;
 				}
-				if(this.currState == State.START && this.prevState != State.IN_COMMENT){
-					if(currChar != '\n' && currChar != '\t'){
-						token.tokenName=this.prevState;//System.out.print(this.prevState);
-						token.lexemeName=currToken;//System.out.println("           "  + currToken);
-						tokenList.add(token);
-						token = new Token();
+				if(!this.isInComment && currChar != '!'){
+					this.currState = parseState(this.currState, getColumn(currChar));
+				}
+				if(this.currState == State.START || i == nextLineRead.length()-1){
+					if(this.currState != State.IN_COMMENT) {
+						
+						if(this.prevState != State.SPACE){
+							if(i == nextLineRead.length()-1) {
+								State read = parseState(this.currState, getColumn(currChar));
+								if(read == this.prevState) {
+									currToken = currToken + currChar;
+									token.tokenName = this.currState;
+									token.lexemeName = currToken;
+									tokenList.add(token);
+									token = new Token();								
+								} else {
+									token.tokenName = this.prevState;
+									token.lexemeName = currToken;
+									tokenList.add(token);
+									token = new Token();
+									currToken = Character.toString(currChar);
+									token.tokenName = read;
+									token.lexemeName = currToken;
+									tokenList.add(token);
+									token = new Token();
+								}
+								++i;
+							} else {
+								token.tokenName = this.prevState;
+								token.lexemeName = currToken;
+								tokenList.add(token);
+								token = new Token();
+							}
+						}
+					} else {
+						++i;
 					}
 					currToken = "";
-				} else {
+				} else if(currChar != ' ' && currChar != '\n' && currChar != '\t'){
 					currToken += currChar;
+					++i;
+				} else {
 					++i;
 				}
 				this.prevState = this.currState;
@@ -161,8 +193,13 @@ public class Lexer {
 		List<Token>tokenList = new ArrayList<Token>();
 		tokenList = createTokenList(fileName);
 		for(Token printToken:tokenList){
+			int numSpaces = 15-printToken.tokenName.toString().length();
+			String spaces = "";
+			for(int i= 0; i < numSpaces; i++) {
+				spaces += " ";
+			}
 			System.out.print(printToken.tokenName);
-			System.out.println("           "  + printToken.lexemeName);
+			System.out.println(spaces + printToken.lexemeName);
 		}
 	}
 }
