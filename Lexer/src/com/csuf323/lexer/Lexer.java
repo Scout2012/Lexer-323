@@ -3,6 +3,9 @@ package com.csuf323.lexer;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 public class Lexer {
 
