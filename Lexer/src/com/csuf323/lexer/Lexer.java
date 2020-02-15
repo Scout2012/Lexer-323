@@ -38,7 +38,7 @@ public class Lexer {
 	}
 
 	Lexer.State[][] stateTransitionTable = {
-			{ State.START,          State.IDENTIFIER,  State.NUMBER,     State.REAL,         State.IN_STRING,  State.IN_COMMENT, State.SPACE, State.IN_COMPARATOR, State.COMPARATOR, State.SEPARATOR, State.END_STATEMENT, State.DOT_TRANSITION},
+			{ State.START,          State.IDENTIFIER,  State.NUMBER,     State.REAL,         State.IN_STRING,  State.IN_COMMENT, State.SPACE,       State.IN_COMPARATOR, State.COMPARATOR, State.SEPARATOR, State.END_STATEMENT, State.DOT_TRANSITION},
 			{ State.IDENTIFIER,     State.IDENTIFIER,  State.IDENTIFIER, State.START,        State.START,      State.START,      State.START,       State.START,         State.START,      State.START,     State.START,         State.START},
 			{ State.NUMBER,         State.START,       State.NUMBER,     State.REAL,         State.START,      State.START,      State.START,       State.START,         State.START,      State.START,     State.START,         State.REAL},
 			{ State.REAL,           State.START,       State.REAL,       State.REAL,         State.START,      State.START,      State.START,       State.START,         State.START,      State.START,     State.START,         State.DOT_TRANSITION},
@@ -114,7 +114,7 @@ public class Lexer {
 	public List<Token> createTokenList(String fileName){
 		File file = new File(fileName);
 		Scanner input = null;
-		List<Token>tokenList = new ArrayList<Token>();
+		List<Token>tokenList = new ArrayList<>();
 		try {
 			input = new Scanner(file);
 		} catch (FileNotFoundException e) {
@@ -141,7 +141,6 @@ public class Lexer {
 				}
 				if(this.currState == State.START || i == nextLineRead.length()-1){
 					if(this.currState != State.IN_COMMENT) {
-
 						if(this.prevState != State.SPACE){
 							if(i == nextLineRead.length()-1) {
 								State read = parseState(this.currState, getColumn(currChar));
@@ -174,7 +173,7 @@ public class Lexer {
 						++i;
 					}
 					currToken = "";
-				} else if(currChar != ' ' && currChar != '\n' && currChar != '\t'){
+				} else if(this.currState== State.IN_COMMENT || (currChar != ' ' && currChar != '\n' && currChar != '\t')){
 					currToken += currChar;
 					++i;
 				} else {
@@ -189,7 +188,7 @@ public class Lexer {
 
 
 	public void feedMe(String fileName) {
-		List<Token>tokenList = new ArrayList<Token>();
+		List<Token>tokenList;
 		tokenList = createTokenList(fileName);
 		for(Token printToken:tokenList){
 			int numSpaces = 15-printToken.tokenName.toString().length();
@@ -204,7 +203,7 @@ public class Lexer {
 
 	public List<Token> cleanTokenList(List<Token> list){
 		String keyWordList [] = {"int", "float", "bool", "true", "false", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "not"};
-		Map<String,State> keyWordMap = new HashMap<String,State>();
+		Map<String,State> keyWordMap = new HashMap<>();
 		for(String word:keyWordList){
 			keyWordMap.put(word, State.KEYWORD);
 		}
@@ -212,7 +211,11 @@ public class Lexer {
 			if(keyWordMap.containsKey(token.lexemeName)){
 				token.tokenName=keyWordMap.get(token.lexemeName);
 			}
+			if(token.lexemeName.startsWith("!")){
+				token.tokenName = State.IN_COMMENT;
+			}
 		}
+
 		return list;
 	}
 
