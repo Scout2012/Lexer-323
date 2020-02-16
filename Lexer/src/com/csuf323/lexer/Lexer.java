@@ -2,6 +2,8 @@ package com.csuf323.lexer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -193,14 +195,27 @@ public class Lexer {
 	public void feedMe(String fileName) {
 		List<Token>tokenList;
 		tokenList = createTokenList(fileName);
-		for(Token printToken:tokenList){
-			int numSpaces = 15-printToken.tokenName.toString().length();
-			String spaces = "";
-			for(int i= 0; i < numSpaces; i++) {
-				spaces += " ";
+		try{
+			File lexerOutput = new File("Lexer Output.txt");
+			if(lexerOutput.createNewFile()) {
+				System.out.println("File created");
 			}
-			System.out.print(printToken.tokenName);
-			System.out.println(spaces + printToken.lexemeName);
+			else{
+				System.out.println("File already exists");
+			}
+			FileWriter writer = new FileWriter("Lexer Output.txt");
+			for(Token printToken:tokenList){
+				int numSpaces = 15-printToken.tokenName.toString().length();
+				String spaces = "";
+				for(int i= 0; i < numSpaces; i++) {
+					spaces += " ";
+				}
+				writer.write(printToken.tokenName.toString());
+				writer.write(spaces + printToken.lexemeName + "\n");
+			}
+			writer.close();
+		}catch(IOException e){
+			System.out.println("Error occured.");
 		}
 	}
 
