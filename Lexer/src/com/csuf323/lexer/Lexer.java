@@ -232,6 +232,9 @@ public class Lexer {
 			if(token.lexemeName.startsWith("!")){
 				token.tokenName = State.IN_COMMENT;
 			}
+			if(token.tokenName == State.IN_COMPARATOR){
+				token.tokenName = State.COMPARATOR;
+			}
 		}
 
 		return list;
