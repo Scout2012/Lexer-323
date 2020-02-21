@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Lexer {
+	final String keyWordList [] = {"int", "float", "bool", "true", "false", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "not"};
+	Map<String,State> keyWordMap = new HashMap<>();
 
 	class Token{
 		public State tokenName;
@@ -62,10 +64,9 @@ public class Lexer {
 	private boolean isInComment = false;
 
 	public Lexer() {
-	}
-
-	private List<Token> lexicallyAnalyze(String expression) {
-		return null;
+		for(String word:keyWordList){
+			keyWordMap.put(word, State.KEYWORD);
+		}
 	}
 
 	private State getColumn(char input) {
@@ -125,7 +126,6 @@ public class Lexer {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-
 		while (input.hasNextLine()) {
 			String nextLineRead = input.nextLine();
 			String currToken = "";
@@ -193,8 +193,7 @@ public class Lexer {
 
 
 	public void feedMe(String fileName) {
-		List<Token>tokenList;
-		tokenList = createTokenList(fileName);
+		List<Token>tokenList = createTokenList(fileName);
 		try{
 			File lexerOutput = new File("Lexer Output.txt");
 			if(lexerOutput.createNewFile()) {
@@ -220,11 +219,6 @@ public class Lexer {
 	}
 
 	public List<Token> cleanTokenList(List<Token> list){
-		String keyWordList [] = {"int", "float", "bool", "true", "false", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "not"};
-		Map<String,State> keyWordMap = new HashMap<>();
-		for(String word:keyWordList){
-			keyWordMap.put(word, State.KEYWORD);
-		}
 		for(Token token:list){
 			if(keyWordMap.containsKey(token.lexemeName)){
 				token.tokenName=keyWordMap.get(token.lexemeName);
@@ -236,8 +230,6 @@ public class Lexer {
 				token.tokenName = State.COMPARATOR;
 			}
 		}
-
 		return list;
 	}
-
 }
