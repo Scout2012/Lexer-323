@@ -1,6 +1,5 @@
 package com.csuf323.lexer;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -11,6 +10,8 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Lexer {
+	final String keyWordList [] = {"int", "float", "bool", "true", "false", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "not"};
+	Map<String,State> keyWordMap = new HashMap<>();
 
 	class Token{
 		public State tokenName;
@@ -63,10 +64,9 @@ public class Lexer {
 	private boolean isInComment = false;
 
 	public Lexer() {
-	}
-
-	private List<Token> lexicallyAnalyze(String expression) {
-		return null;
+		for(String word:keyWordList){
+			keyWordMap.put(word, State.KEYWORD);
+		}
 	}
 
 	private State getColumn(char input) {
@@ -126,7 +126,6 @@ public class Lexer {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-
 		while (input.hasNextLine()) {
 			String nextLineRead = input.nextLine();
 			String currToken = "";
@@ -194,49 +193,32 @@ public class Lexer {
 
 
 	public void feedMe(String fileName) {
-		List<Token>tokenList;
-		tokenList = createTokenList(fileName);
-		for(Token printToken:tokenList){
-			if(printToken.tokenName != State.IN_COMMENT) {
+		List<Token>tokenList = createTokenList(fileName);
+		try{
+			File lexerOutput = new File("Lexer Output.txt");
+			if(lexerOutput.createNewFile()) {
+				System.out.println("File created");
+			}
+			else{
+				System.out.println("File already exists");
+			}
+			FileWriter writer = new FileWriter("Lexer Output.txt");
+			for(Token printToken:tokenList){
 				int numSpaces = 15-printToken.tokenName.toString().length();
 				String spaces = "";
 				for(int i= 0; i < numSpaces; i++) {
 					spaces += " ";
 				}
-				String textToAppend = printToken.tokenName + spaces + printToken.lexemeName;
-				
-				BufferedWriter writer = null;
-				try {
-					writer = new BufferedWriter(new FileWriter("output_lexeme.txt", true));
-				} catch (IOException e) {
-					e.printStackTrace();
-				}  
-				try {
-					writer.newLine();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				try {
-					writer.write(textToAppend);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				try {
-					writer.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				writer.write(printToken.tokenName.toString());
+				writer.write(spaces + printToken.lexemeName + "\n");
 			}
+			writer.close();
+		}catch(IOException e){
+			System.out.println("Error occured.");
 		}
 	}
 
 	public List<Token> cleanTokenList(List<Token> list){
-		String keyWordList [] = {"int", "float", "bool", "true", "false", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "not"};
-		Map<String,State> keyWordMap = new HashMap<>();
-		for(String word:keyWordList){
-			keyWordMap.put(word, State.KEYWORD);
-		}
-		
 		for(Token token:list){
 			if(keyWordMap.containsKey(token.lexemeName)){
 				token.tokenName=keyWordMap.get(token.lexemeName);
@@ -244,9 +226,10 @@ public class Lexer {
 			if(token.lexemeName.startsWith("!")){
 				token.tokenName = State.IN_COMMENT;
 			}
+			if(token.tokenName == State.IN_COMPARATOR){
+				token.tokenName = State.COMPARATOR;
+			}
 		}
-
 		return list;
 	}
-
 }
