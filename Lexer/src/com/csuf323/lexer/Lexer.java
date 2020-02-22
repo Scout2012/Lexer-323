@@ -12,7 +12,7 @@ import java.util.Scanner;
 public class Lexer {
 	final String keyWordList [] = {"int", "float", "bool", "true", "false", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "not"};
 	Map<String,State> keyWordMap = new HashMap<>();
-
+	List<Token>removeList = new ArrayList<>();
 	class Token{
 		public State tokenName;
 		public String lexemeName;
@@ -229,7 +229,11 @@ public class Lexer {
 			if(token.tokenName == State.IN_COMPARATOR){
 				token.tokenName = State.COMPARATOR;
 			}
+			if(token.lexemeName==""){
+				removeList.add(token);
+			}
 		}
+		list.removeAll(removeList);
 		return list;
 	}
 }
